@@ -1,0 +1,22 @@
+if MODE == 'wgan':
+    gen_cost = -tf.reduce_mean(disc_fake)
+    disc_cost = tf.reduce_mean(disc_fake) - tf.reduce_mean(disc_real)
+
+
+    gen_train_op = tf.train.RMSPropOptimizer(
+        learning_rate=5e-5
+    ).minimize(gen_cost, var_list=gen_params)
+    disc_train_op = tf.train.RMSPropOptimizer(
+        learning_rate=5e-5
+    ).minimize(disc_cost, var_list=disc_params)
+
+    clip_ops = []
+    for var in lib.params_with_name('Discriminator'):
+        clip_bounds = [-0.01, 0.01]
+        clip_ops.append(
+            tf.assign(
+                var, 
+                tf.clip_by_value(var, clip_bounds[0], clip_bounds[1])
+            )
+        )
+    clip_disc_weights = tf.group(*clip_ops)

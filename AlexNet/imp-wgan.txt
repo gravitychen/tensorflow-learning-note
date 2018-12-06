@@ -1,0 +1,39 @@
+if MODE == 'wgan-gp':
+
+	#只要改D的loss
+	#disc_fake = self.logit_fake
+	#disc_real = self.logit_real
+	#real_data = self.image_real
+	#fake_data = self.image_fake
+	#disc_cost = self.d_loss
+
+    disc_cost = tf.reduce_mean(disc_fake) - tf.reduce_mean(disc_real)
+
+    alpha = tf.random_uniform(
+        shape=[BATCH_SIZE,1], 
+        minval=0.,
+        maxval=1.
+    )
+    differences = fake_data - real_data
+
+    interpolates = real_data + (alpha*differences)
+
+    gradients = tf.gradients(Discriminator(interpolates), [interpolates])[0]
+
+    slopes = tf.sqrt(tf.reduce_sum(tf.square(gradients), reduction_indices=[1]))
+
+    # 浪打项
+    gradient_penalty = tf.reduce_mean((slopes-1.)**2)
+
+    #L(i) 项
+    disc_cost += LAMBDA*gradient_penalty 
+
+    
+
+    disc_train_op = tf.train.AdamOptimizer(
+        learning_rate=1e-4, 
+        beta1=0.5, 
+        beta2=0.9
+    ).minimize(disc_cost, var_list=disc_params)
+
+    clip_disc_weights = None
